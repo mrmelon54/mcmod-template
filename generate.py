@@ -2,8 +2,6 @@
 import tarfile
 from pathlib import Path
 import os.path
-import urllib.request
-import shutil
 import sys
 import json
 import os
