@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "%%modid%%",
+  "version": "${version}",
+  "name": "${name}",
+  "description": "${description}",
+  "authors": [
+    "MrMelon54"
+  ],
+  "contact": {
+    "homepage": "%%modwebsite%%",
+    "sources": "%%modsource%%",
+    "issues": "%%modissue%%"
+  },
+  "license": "GPL-3.0-only",
+  "icon": "assets/%%modid%%/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "%%modgroup%%.fabric.%%modclass%%Fabric"
+    ]
+  },
+  "mixins": [
+    "%%modid%%.mixins.json",
+    "%%modid%%-common.mixins.json"
+  ],
+  "depends": {
+    "fabric": "*",
+    "minecraft": ">=1.20",
+    "architectury": ">=9.0.0"
+  }
+}

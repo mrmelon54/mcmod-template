@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "mixin": [
+    "%%modid%%.mixins.json",
+    "%%modid%%-common.mixins.json"
+  ],
+  "quilt_loader": {
+    "group": "${group}",
+    "id": "%%modid%%",
+    "version": "${version}",
+    "name": "${name}",
+    "description": "${description}",
+    "authors": [
+      "MrMelon54"
+    ],
+    "contact": {
+      "homepage": "%%modwebsite%%",
+      "sources": "%%modsource%%",
+      "issues": "%%modissue%%"
+    },
+    "license": "GPL-3.0-only",
+    "icon": "assets/%%modid%%/icon.png",
+    "intermediate_mappings": "net.fabricmc:intermediary",
+    "environment": "*",
+    "entrypoints": {
+      "init": [
+        "%%modgroup%%.quilt.%%modclass%%Quilt"
+      ]
+    },
+    "depends": [
+      {
+        "id": "quilt_loader",
+        "version": "*"
+      },
+      {
+        "id": "quilt_base",
+        "version": "*"
+      },
+      {
+        "id": "minecraft",
+        "version": ">=1.20"
+      },
+      {
+        "id": "architectury",
+        "version": ">=9.0.0"
+      }
+    ]
+  }
+}
