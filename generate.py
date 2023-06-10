@@ -6,14 +6,20 @@ import urllib.request
 import shutil
 import sys
 import json
+import os
+
+if __name__ != "__main__":
+  print("This is not a library")
+  sys.exit(1)
+
+script_path = os.path.realpath(__file__)
+files_source = os.path.join(os.path.dirname(script_path), 'files.tar.gz')
 
 def ask_for_info(prompt):
   while True:
     v = input(prompt)
     if v != "":
       return v
-
-dl_url = "https://copy.mrmelon54.com/assets/arch-1.20.tar.gz"
 
 modinfo = {
   "_example": "Delete this line when done",
@@ -53,10 +59,7 @@ def replace_mod_info_in_file(x):
     x = x.replace("%%" + k + "%%", modinfo[k])
   return x
 
-with urllib.request.urlopen(dl_url) as res, open("files.tar.gz", 'wb') as out:
-  shutil.copyfileobj(res, out)
-
-with tarfile.open('files.tar.gz', 'r') as tf:
+with tarfile.open(files_source, 'r') as tf:
   for member in tf.getmembers():
     if not member.isdir():
       mf = replace_mod_info_in_path(member.name)
