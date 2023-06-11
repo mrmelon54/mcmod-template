@@ -1,7 +1,5 @@
 package %%modgroup%%;
 
-import dev.architectury.registry.registries.reg;
-
 public class %%modclass%% {
     public static final String MOD_ID = "%%modid%%";
 

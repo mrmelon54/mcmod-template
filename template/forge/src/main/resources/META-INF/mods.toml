@@ -8,7 +8,7 @@ modId = "%%modid%%"
 version = "${version}"
 displayName = "${name}"
 authors = "MrMelon54"
-description = "${description}"
+description = "${desc}"
 #logoFile = ""
 
 [[dependencies.%%modid%%]]

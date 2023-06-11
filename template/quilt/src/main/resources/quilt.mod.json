@@ -9,7 +9,7 @@
     "id": "%%modid%%",
     "version": "${version}",
     "name": "${name}",
-    "description": "${description}",
+    "description": "${desc}",
     "authors": [
       "MrMelon54"
     ],

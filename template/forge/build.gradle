@@ -14,8 +14,8 @@ loom {
         convertAccessWideners = true
         extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
 
-        mixinConfig "examplemod-common.mixins.json"
-        mixinConfig "examplemod.mixins.json"
+        mixinConfig "%%modid%%-common.mixins.json"
+        mixinConfig "%%modid%%.mixins.json"
     }
 }
 
@@ -40,7 +40,9 @@ processResources {
     inputs.property "version", project.version
 
     filesMatching("META-INF/mods.toml") {
-        expand "version": project.version
+        expand "version": project.version,
+                "name": rootProject.mod_name,
+                "desc": rootProject.mod_description
     }
 }
 
