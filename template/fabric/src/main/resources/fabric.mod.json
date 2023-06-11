@@ -13,7 +13,7 @@
     "issues": "%%modissue%%"
   },
   "license": "GPL-3.0-only",
-  "icon": "assets/%%modid%%/icon.png",
+  "icon": "icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [

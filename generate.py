@@ -44,6 +44,10 @@ if "_example" in modinfo:
   print("Please fill out 'mod-info.json' and remove the '_example' field")
   sys.exit(1)
 
+if "-" in modinfo['modid']:
+  print("Forge doesn't allow '-' so use '_' instead")
+  sys.exit(1)
+
 def replace_mod_info_in_path(x):
   for k in modinfo:
     if k == "modgroup":

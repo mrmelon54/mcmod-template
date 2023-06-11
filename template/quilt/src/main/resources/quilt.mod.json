@@ -8,20 +8,21 @@
     "group": "${group}",
     "id": "%%modid%%",
     "version": "${version}",
-    "name": "%%modname%%",
-    "description": "%%moddesc%%",
-    "authors": [
-      "MrMelon54"
-    ],
-    "contact": {
-      "homepage": "%%modwebsite%%",
-      "sources": "%%modsource%%",
-      "issues": "%%modissue%%"
+    "metadata": {
+      "name": "%%modname%%",
+      "description": "%%moddesc%%",
+      "contributors": {
+        "MrMelon54": "Owner"
+      },
+      "contact": {
+        "homepage": "%%modwebsite%%",
+        "sources": "%%modsource%%",
+        "issues": "%%modissue%%"
+      },
+      "license": "GPL-3.0-only",
+      "icon": "icon.png"
     },
-    "license": "GPL-3.0-only",
-    "icon": "assets/%%modid%%/icon.png",
     "intermediate_mappings": "net.fabricmc:intermediary",
-    "environment": "*",
     "entrypoints": {
       "init": [
         "%%modgroup%%.quilt.%%modclass%%Quilt"
@@ -45,5 +46,8 @@
         "version": ">=9.0.0"
       }
     ]
+  },
+  "minecraft": {
+    "environment": "*"
   }
 }
