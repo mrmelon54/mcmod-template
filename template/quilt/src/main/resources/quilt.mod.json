@@ -8,8 +8,8 @@
     "group": "${group}",
     "id": "%%modid%%",
     "version": "${version}",
-    "name": "${name}",
-    "description": "${desc}",
+    "name": "%%modname%%",
+    "description": "%%moddesc%%",
     "authors": [
       "MrMelon54"
     ],

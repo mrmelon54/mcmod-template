@@ -6,9 +6,9 @@ license = "GPL-3.0-only"
 [[mods]]
 modId = "%%modid%%"
 version = "${version}"
-displayName = "${name}"
+displayName = "%%modname%%"
 authors = "MrMelon54"
-description = "${desc}"
+description = "%%moddesc%%"
 #logoFile = ""
 
 [[dependencies.%%modid%%]]

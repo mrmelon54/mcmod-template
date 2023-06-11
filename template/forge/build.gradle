@@ -40,9 +40,7 @@ processResources {
     inputs.property "version", project.version
 
     filesMatching("META-INF/mods.toml") {
-        expand "version": project.version,
-                "name": rootProject.mod_name,
-                "desc": rootProject.mod_description
+        expand "version": project.version
     }
 }
 
