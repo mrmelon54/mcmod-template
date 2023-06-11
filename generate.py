@@ -72,3 +72,5 @@ with tarfile.open(files_source, 'r') as tf:
         with open(mf, "w", encoding='utf8') as f2:
           c = f.read().decode('utf-8')
           f2.write(replace_mod_info_in_file(c))
+
+os.system('chmod +x gradlew')
