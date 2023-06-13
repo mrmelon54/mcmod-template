@@ -1,4 +1,4 @@
-package %%modgroup%%.fabric;
+package %%modgroup%%.quilt;
 
 import %%modgroup%%.ExampleExpectPlatform;
 import org.quiltmc.loader.api.QuiltLoader;
