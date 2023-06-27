@@ -69,6 +69,11 @@ with tarfile.open(files_source, 'r') as tf:
       print("Writing file:", mf)
       Path(md).mkdir(parents=True, exist_ok=True)
       f = tf.extractfile(member)
+      if os.path.exists(mf):
+        con = input("Trying to override file, continue? [y/N]: ")
+        if not con.tolower() in ["y","yes"]:
+          print("Goodbye")
+          return
       if member.name.endswith('.jar'):
         with open(mf, "wb") as f2:
           f2.write(f.read())
