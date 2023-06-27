@@ -61,6 +61,7 @@ def replace_mod_info_in_file(x):
     x = x.replace("%%" + k + "%%", modinfo[k])
   return x
 
+overrideFiles = False
 with tarfile.open(files_source, 'r') as tf:
   for member in tf.getmembers():
     if not member.isdir():
@@ -69,11 +70,13 @@ with tarfile.open(files_source, 'r') as tf:
       print("Writing file:", mf)
       Path(md).mkdir(parents=True, exist_ok=True)
       f = tf.extractfile(member)
-      if os.path.exists(mf):
-        con = input("Trying to override file, continue? [y/N]: ")
-        if not con.tolower() in ["y","yes"]:
+      if os.path.exists(mf) and not overrideFiles:
+        con = input("Trying to override file, ignore existing files? [y/N]: ")
+        if con.lower() in ["y","yes"]:
+          overrideFiles = True
+        else:
           print("Goodbye")
-          return
+          sys.exit(1)
       if member.name.endswith('.jar'):
         with open(mf, "wb") as f2:
           f2.write(f.read())
