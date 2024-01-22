@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[46,)"
+loaderVersion = "*"
 issueTrackerURL = "%%modissue%%"
 license = "GPL-3.0-only"
 
@@ -8,26 +8,19 @@ modId = "%%modid%%"
 version = "${version}"
 displayName = "%%modname%%"
 authors = "MrMelon54"
-description = "%%moddesc%%"
+description = "${description}"
 logoFile = "/icon.png"
-
-[[dependencies.%%modid%%]]
-modId = "forge"
-mandatory = true
-versionRange = "[46,)"
-ordering = "NONE"
-side = "BOTH"
 
 [[dependencies.%%modid%%]]
 modId = "minecraft"
 mandatory = true
-versionRange = "[1.20,)"
+versionRange = "${minecraft_version}"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.%%modid%%]]
 modId = "architectury"
 mandatory = true
-versionRange = "[9.0.0,)"
-ordering = "AFTER"
+versionRange = "[${architectury_version},)"
+ordering = "NONE"
 side = "BOTH"
