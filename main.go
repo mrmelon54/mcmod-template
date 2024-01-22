@@ -17,33 +17,28 @@ func main() {
 	log.Println(latestArch)
 }
 
-func getLatestMavenVersion(url string) (T, error) {
-	var t T
-	resp, err := http.Get(url)
-	if err != nil {
-		return t, err
-	}
-	defer resp.Body.Close()
-	dec := xml.NewDecoder(resp.Body)
-	err = dec.Decode(&t)
-	return t, err
-}
-
 type MavenMetadata struct {
 	Versioning struct {
 		Latest string `xml:"latest"`
 	} `xml:"versioning"`
 }
 
-func getLatestArchitecturyPlugin() (string, error) {
-	m, err := decodeMavenXml[MavenArchitecturyPlugin]("https://maven.architectury.dev/architectury-plugin/architectury-plugin.gradle.plugin/maven-metadata.xml")
-	return m.Versioning.Latest, err
+func getLatestMavenVersion(url string) (string, error) {
+	var t MavenMetadata
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	dec := xml.NewDecoder(resp.Body)
+	err = dec.Decode(&t)
+	return t.Versioning.Latest, err
 }
 
-type MavenArchitecturyLoom struct {
+func getLatestArchitecturyPlugin() (string, error) {
+	return getLatestMavenVersion("https://maven.architectury.dev/architectury-plugin/architectury-plugin.gradle.plugin/maven-metadata.xml")
 }
 
 func getLatestArchitecturyLoom() (string, error) {
-	m, err := decodeMavenXml[MavenArchitecturyLoom]("https://maven.architectury.dev/dev/architectury/architectury-loom/maven-metadata.xml")
-
+	return getLatestMavenVersion("https://maven.architectury.dev/dev/architectury/architectury-loom/maven-metadata.xml")
 }
