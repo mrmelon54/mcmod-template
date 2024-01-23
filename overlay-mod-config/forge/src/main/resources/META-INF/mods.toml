@@ -1,0 +1,33 @@
+modLoader = "javafml"
+loaderVersion = "*"
+issueTrackerURL = "%%modissue%%"
+license = "GPL-3.0-only"
+
+[[mods]]
+modId = "%%modid%%"
+version = "${version}"
+displayName = "%%modname%%"
+authors = "MrMelon54"
+description = "${description}"
+logoFile = "/icon.png"
+
+[[dependencies.%%modid%%]]
+modId = "minecraft"
+mandatory = true
+versionRange = "${minecraft_version}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.%%modid%%]]
+modId = "architectury"
+mandatory = true
+versionRange = "[${architectury_version},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.%%modid%%]]
+modId = "cloth_config"
+mandatory = true
+versionRange = "[${cloth_config_version},)"
+ordering = "AFTER"
+side = "BOTH"

@@ -5,7 +5,7 @@ go 1.21.6
 require (
 	github.com/fatih/color v1.16.0
 	github.com/icholy/replace v0.6.0
-	github.com/mrmelon54/mcmodupdater v0.0.8
+	github.com/mrmelon54/mcmodupdater v0.0.9
 	github.com/wessie/appdirs v0.0.0-20141031215813-6573e894f8e2
 	golang.org/x/text v0.14.0
 )

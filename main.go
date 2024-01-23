@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"embed"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"github.com/mrmelon54/mcmodupdater/develop"
 	"github.com/mrmelon54/mcmodupdater/develop/dev"
 	"github.com/wessie/appdirs"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
@@ -29,7 +31,20 @@ var (
 		dev.PlatformFabric,
 		dev.PlatformForge,
 	}
+	propVersions = []develop.PropVersion{
+		develop.ModVersion,
+		develop.ArchitecturyVersion,
+		develop.FabricLoaderVersion,
+		develop.FabricApiVersion,
+		develop.ForgeVersion,
+		develop.QuiltLoaderVersion,
+		develop.QuiltFabricApiVersion,
+		develop.NeoForgeVersion,
+	}
 )
+
+//go:embed all:template
+var templateDir embed.FS
 
 func prompt(s string) string {
 	_, _ = questionColor.Print(s)
@@ -89,9 +104,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	mcVersion := prompt("[#] Minecraft Version (latest, snapshot, 1.20, 1.20.4): ")
-	modName := prompt("[#] Mod Name: ")
-	modDesc := prompt("[#] Mod Description: ")
+	mcVersion := prompt("[?] Minecraft Version (1.20, 1.20.4): ")
+	modName := prompt("[?] Mod Name: ")
+	modDesc := prompt("[?] Mod Description: ")
 
 	modNameSafe := toModId.ReplaceAllString(modName, "_")
 	modId := strings.ToLower(modNameSafe)
@@ -123,6 +138,14 @@ func main() {
 	modInfo["modsource"] = modSource
 	modInfo["modissue"] = modIssue
 
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	wdPath := filepath.Join(cwd, modId)
+
+	fakePrompt("[@] Mod Path: ", wdPath)
+
 	switch prompt("Is that ok [y/N]? ") {
 	case "y", "Y":
 		break
@@ -130,8 +153,6 @@ func main() {
 		log.Println("Goodbye")
 		os.Exit(1)
 	}
-
-	wdPath := modId
 
 	err = os.MkdirAll(wdPath, os.ModePerm)
 	if err != nil {
@@ -151,13 +172,13 @@ func main() {
 	log.Println("Latest Arch Plugin:", latestArchPlugin)
 	log.Println("Latest Arch Loom:", latestArchLoom)
 
-	tree := os.DirFS(wdPath).(fs.StatFS)
-	info, err := mcm.LoadTree(tree)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	log.Println(color.GreenString("[+] Fetching version data..."))
+
+	// add subplatforms to architectury
+	mcm.PlatArch().SubPlatforms = make(map[develop.DevPlatform]develop.Develop)
+	for _, i := range platforms {
+		mcm.PlatArch().SubPlatforms[i] = mcm.Platforms()[i]
+	}
 
 	// fetch architectury specific caches first
 	err = fetchCalls(mcm.PlatArch())
@@ -177,33 +198,72 @@ func main() {
 		}
 	}
 
-	// hard code chosen Minecraft version
-	info.Versions[develop.MinecraftVersion] = mcVersion
-	ver := mcm.VersionUpdateList(info)
-	gradleProp, err := os.Create(filepath.Join(wdPath, "gradle.properties"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	tempGradleProp, err := templateDir.Open("template/gradle.properties")
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = mcm.UpdateGradleProperties(gradleProp, tempGradleProp, ver.ChangeToLatest())
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// rename and replace rest of template
-	err = fs.WalkDir(templateDir, "template", func(path string, d fs.DirEntry, err error) error {
-		if !d.IsDir() {
-			println("path:", path)
-			//fileReplaceModes[path]
-			//templateDir.Open(path)
+	err = fs.WalkDir(templateDir, "template", func(tempPath string, d fs.DirEntry, err error) error {
+		relPath := strings.TrimPrefix(tempPath, "template/")
+		replacedPath, err := modInfo.ReplaceInString(relPath)
+		if err != nil {
+			return err
+		}
+		fullPath := filepath.Join(wdPath, replacedPath)
+
+		// skip directories
+		if d.IsDir() {
+			return nil
+		}
+
+		// create directory before file
+		err = os.MkdirAll(filepath.Dir(fullPath), os.ModePerm)
+		if err != nil {
+			return err
+		}
+
+		// open input from template
+		openFile, err := templateDir.Open(tempPath)
+		if err != nil {
+			return err
+		}
+
+		// open output file
+		createFile, err := os.Create(fullPath)
+		if err != nil {
+			return err
+		}
+
+		switch fileReplaceModes[relPath] {
+		case NormalReplace:
+			_, err = io.Copy(createFile, modInfo.ReplaceInStream(openFile))
+			if err != nil {
+				return err
+			}
+		case NoReplace:
+			_, err = io.Copy(createFile, openFile)
+			if err != nil {
+				return err
+			}
+		case PropertiesReplace:
+			// hard code chosen Minecraft version
+			infoVersions := make(map[develop.PropVersion]string)
+			infoVersions[develop.MinecraftVersion] = mcVersion
+			for _, i := range propVersions {
+				infoVersions[i] = " "
+			}
+
+			// generate update list
+			ver := mcm.VersionUpdateList(&develop.PlatformVersions{
+				Platform: mcm.PlatArch(),
+				Versions: infoVersions,
+			})
+			tempGradleProp := modInfo.ReplaceInStream(openFile)
+			err = mcm.UpdateGradleProperties(createFile, tempGradleProp, ver.ChangeToLatest())
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	})
 	if err != nil {
-		log.Fatal("Failed to walk files in template:", err)
+		log.Fatal("Failed to walk files in template: ", err)
 	}
 
 	log.Println(color.HiGreenString("[+] Finished generating mod from template"))

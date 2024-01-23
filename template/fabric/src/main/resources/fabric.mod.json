@@ -17,7 +17,7 @@
   "environment": "client",
   "entrypoints": {
     "main": [
-      "%%modgroup%.fabric.%%modclass%%Fabric"
+      "%%modgroup%%.fabric.%%modclass%%Fabric"
     ]
   },
   "mixins": [
