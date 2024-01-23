@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"github.com/1f349/overlapfs"
 	"github.com/fatih/color"
 	"github.com/mrmelon54/mcmodupdater"
 	mcmConfig "github.com/mrmelon54/mcmodupdater/config"
@@ -16,6 +17,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -27,7 +29,8 @@ var (
 	configPath    = filepath.Join(userConfigDir, "config.json")
 	questionColor = color.New(color.FgCyan)
 	toModId       = regexp.MustCompile("[^a-zA-Z0-9]+")
-	platforms     = []develop.DevPlatform{
+
+	platforms = []develop.DevPlatform{
 		dev.PlatformFabric,
 		dev.PlatformForge,
 	}
@@ -41,16 +44,38 @@ var (
 		develop.QuiltFabricApiVersion,
 		develop.NeoForgeVersion,
 	}
+
+	//go:embed all:template
+	templateDir embed.FS
+	//go:embed all:overlay-mod-config
+	overlayModConfig embed.FS
 )
 
-//go:embed all:template
-var templateDir embed.FS
+func MustSub(f fs.FS, dir string) fs.FS {
+	s, err := fs.Sub(f, dir)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
 
 func prompt(s string) string {
 	_, _ = questionColor.Print(s)
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	return scanner.Text()
+}
+
+func promptCheckbox(s string) bool {
+	_, _ = questionColor.Print(s)
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	switch scanner.Text() {
+	case "y", "Y":
+		return true
+	default:
+		return false
+	}
 }
 
 func fakePrompt(s string, v string) {
@@ -99,6 +124,9 @@ func main() {
 		}
 	}
 
+	var templateLayers fs.FS
+	templateLayers = MustSub(templateDir, "template")
+
 	mcm, err := mcmodupdater.NewMcModUpdater(&conf.McmConfig)
 	if err != nil {
 		log.Fatal(err)
@@ -126,8 +154,6 @@ func main() {
 
 	modInfo := make(ModInfo)
 	modInfo["minecraft_version"] = modName
-	modInfo["architectury_plugin_version"] = modName
-	modInfo["architectury_loom_version"] = modName
 	modInfo["modname"] = modName
 	modInfo["moddesc"] = modDesc
 	modInfo["modid"] = modId
@@ -146,10 +172,12 @@ func main() {
 
 	fakePrompt("[@] Mod Path: ", wdPath)
 
-	switch prompt("Is that ok [y/N]? ") {
-	case "y", "Y":
-		break
-	default:
+	useAutoConfig := promptCheckbox("[?] Use AutoConfig [y/N]? ")
+	if useAutoConfig {
+		templateLayers = overlapfs.OverlapFS{A: templateLayers, B: MustSub(overlayModConfig, "overlay-mod-config")}
+	}
+
+	if !promptCheckbox("[?] Is that ok [y/N]? ") {
 		log.Println("Goodbye")
 		os.Exit(1)
 	}
@@ -161,6 +189,10 @@ func main() {
 
 	log.Println(color.GreenString("[+] Finding latest Architectury versions..."))
 
+	latestArchApi, err := getLatestArchitecturyApi(mcVersion)
+	if err != nil {
+		log.Fatal("getLatestArchitecturyApi", err)
+	}
 	latestArchPlugin, err := getLatestArchitecturyPlugin()
 	if err != nil {
 		log.Fatal("getLatestArchitecturyPlugin", err)
@@ -169,8 +201,25 @@ func main() {
 	if err != nil {
 		log.Fatal("getLatestArchitecturyLoom", err)
 	}
+	log.Println("Latest Arch API:", latestArchApi)
 	log.Println("Latest Arch Plugin:", latestArchPlugin)
 	log.Println("Latest Arch Loom:", latestArchLoom)
+	modInfo["architectury_version"] = latestArchApi
+	modInfo["architectury_plugin_version"] = latestArchPlugin
+	modInfo["architectury_loom_version"] = latestArchLoom
+
+	if useAutoConfig {
+		log.Println(color.GreenString("[+] Finding cloth-config and modmenu"))
+
+		modInfo["cloth_config_version"], err = getLatestClothConfig(mcVersion)
+		if err != nil {
+			log.Fatal("getLatestClothConfig", err)
+		}
+		modInfo["modmenu_version"], err = getLatestModMenu(mcVersion)
+		if err != nil {
+			log.Fatal("getLatestModMenu", err)
+		}
+	}
 
 	log.Println(color.GreenString("[+] Fetching version data..."))
 
@@ -199,9 +248,8 @@ func main() {
 	}
 
 	// rename and replace rest of template
-	err = fs.WalkDir(templateDir, "template", func(tempPath string, d fs.DirEntry, err error) error {
-		relPath := strings.TrimPrefix(tempPath, "template/")
-		replacedPath, err := modInfo.ReplaceInString(relPath)
+	err = fs.WalkDir(templateLayers, ".", func(tempPath string, d fs.DirEntry, err error) error {
+		replacedPath, err := modInfo.ReplaceInString(tempPath)
 		if err != nil {
 			return err
 		}
@@ -219,7 +267,7 @@ func main() {
 		}
 
 		// open input from template
-		openFile, err := templateDir.Open(tempPath)
+		openFile, err := templateLayers.Open(tempPath)
 		if err != nil {
 			return err
 		}
@@ -230,7 +278,7 @@ func main() {
 			return err
 		}
 
-		switch fileReplaceModes[relPath] {
+		switch fileReplaceModes[tempPath] {
 		case NormalReplace:
 			_, err = io.Copy(createFile, modInfo.ReplaceInStream(openFile))
 			if err != nil {
@@ -293,6 +341,38 @@ func getLatestArchitecturyPlugin() (string, error) {
 
 func getLatestArchitecturyLoom() (string, error) {
 	return getLatestMavenVersion("https://maven.architectury.dev/dev/architectury/architectury-loom/maven-metadata.xml")
+}
+
+type ModrinthVersionsList []struct {
+	VersionNumber string `json:"version_number"`
+}
+
+func getModrinthFilteredVersion(u string, mc string) (string, error) {
+	var t ModrinthVersionsList
+	resp, err := http.Get(u + "?game_versions=" + url.QueryEscape("[\""+mc+"\"]"))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	dec := json.NewDecoder(resp.Body)
+	err = dec.Decode(&t)
+	if len(t) < 1 {
+		return "", fmt.Errorf("no version found")
+	}
+	before, _, _ := strings.Cut(t[0].VersionNumber, "+")
+	return before, nil
+}
+
+func getLatestClothConfig(mc string) (string, error) {
+	return getModrinthFilteredVersion("https://api.modrinth.com/v2/project/cloth-config/version", mc)
+}
+
+func getLatestModMenu(mc string) (string, error) {
+	return getModrinthFilteredVersion("https://api.modrinth.com/v2/project/modmenu/version", mc)
+}
+
+func getLatestArchitecturyApi(mc string) (string, error) {
+	return getModrinthFilteredVersion("https://api.modrinth.com/v2/project/architectury-api/version", mc)
 }
 
 func fetchCalls(platform develop.Develop) error {

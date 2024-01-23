@@ -3,6 +3,7 @@ module github.com/mrmelon54/mcmod-template
 go 1.21.6
 
 require (
+	github.com/1f349/overlapfs v0.0.1
 	github.com/fatih/color v1.16.0
 	github.com/icholy/replace v0.6.0
 	github.com/mrmelon54/mcmodupdater v0.0.9
