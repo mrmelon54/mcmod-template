@@ -1,4 +1,4 @@
-module github.com/mrmelon54/mod-template
+module github.com/mrmelon54/mcmod-template
 
 go 1.21.6
 
