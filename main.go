@@ -292,6 +292,7 @@ func main() {
 		case PropertiesReplace:
 			// hard code chosen Minecraft version
 			infoVersions := make(map[develop.PropVersion]string)
+			infoVersions[develop.ModVersion] = "1.0.0"
 			infoVersions[develop.MinecraftVersion] = mcVersion
 			for _, i := range propVersions {
 				infoVersions[i] = " "
