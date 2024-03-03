@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/1f349/overlapfs"
 	"github.com/fatih/color"
 	"github.com/mrmelon54/mcmodupdater"
 	mcmConfig "github.com/mrmelon54/mcmodupdater/config"
@@ -47,8 +46,6 @@ var (
 
 	//go:embed all:template
 	templateDir embed.FS
-	//go:embed all:overlay-mod-config
-	overlayModConfig embed.FS
 )
 
 func MustSub(f fs.FS, dir string) fs.FS {
@@ -172,11 +169,6 @@ func main() {
 
 	fakePrompt("[@] Mod Path: ", wdPath)
 
-	useAutoConfig := promptCheckbox("[?] Use AutoConfig [y/N]? ")
-	if useAutoConfig {
-		templateLayers = overlapfs.OverlapFS{A: templateLayers, B: MustSub(overlayModConfig, "overlay-mod-config")}
-	}
-
 	if !promptCheckbox("[?] Is that ok [y/N]? ") {
 		log.Println("Goodbye")
 		os.Exit(1)
@@ -207,19 +199,6 @@ func main() {
 	modInfo["architectury_version"] = latestArchApi
 	modInfo["architectury_plugin_version"] = latestArchPlugin
 	modInfo["architectury_loom_version"] = latestArchLoom
-
-	if useAutoConfig {
-		log.Println(color.GreenString("[+] Finding cloth-config and modmenu"))
-
-		modInfo["cloth_config_version"], err = getLatestClothConfig(mcVersion)
-		if err != nil {
-			log.Fatal("getLatestClothConfig", err)
-		}
-		modInfo["modmenu_version"], err = getLatestModMenu(mcVersion)
-		if err != nil {
-			log.Fatal("getLatestModMenu", err)
-		}
-	}
 
 	log.Println(color.GreenString("[+] Fetching version data..."))
 
