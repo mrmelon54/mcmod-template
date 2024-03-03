@@ -30,7 +30,9 @@ configurations {
 dependencies {
     forge "net.minecraftforge:forge:${rootProject.forge_version}"
     // Remove the next line if you don't want to depend on the API
-    modApi "dev.architectury:architectury-forge:${rootProject.architectury_version}"
+    modApi "${rootProject.architectury_group}:architectury-forge:${rootProject.architectury_version}"
+
+    modApi "me.shedaniel.cloth:cloth-config-forge:${rootProject.cloth_config_version}"
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }
@@ -42,8 +44,9 @@ processResources {
     filesMatching("META-INF/mods.toml") {
         expand "version": project.version,
                 "description": rootProject.mod_description,
-                "minecraft_version": rootProject.minecraft_version,
-                "architectury_version": rootProject.architectury_version
+                "compatible_minecraft_versions": rootProject.compatible_forge_versions,
+                "architectury_version": rootProject.architectury_version,
+                "cloth_config_version": rootProject.cloth_config_version
      }
 }
 

@@ -3,6 +3,49 @@ plugins {
     id "dev.architectury.loom" version "%%architectury_loom_version%%" apply false
     id "io.github.pacifistmc.forgix" version "1.2.6"
     id "org.ajoberstar.grgit" version "4.1.0"
+    id "systems.manifold.manifold-gradle-plugin" version "0.0.2-alpha"
+}
+
+import groovy.json.JsonSlurper
+
+def writeBuildGradlePredefine(List<String> mcVers, int mcIndex) {
+    // Build the list of preprocessors to use
+    StringBuilder sb = new StringBuilder();
+
+    sb.append("# DON'T TOUCH THIS FILE, This is handled by the build script\n");
+
+
+    for (int i = 0; i < mcVers.size(); i++) {
+        String verStr = mcVers[i].replace(".", "_");
+        sb.append("MC_" + verStr + "=" + i.toString() + "\n");
+
+        if (mcIndex == i)
+            sb.append("MC_VER=" + i.toString() + "\n");
+    }
+
+
+    new File(projectDir, "build.properties").text = sb.toString()
+}
+
+def generateForgeVersions(mc_versions) {
+    def json = new JsonSlurper().parseText(mc_versions) as List<String>
+    if (json.size() == 0) {
+        return "error"
+    }
+    return "[" + json[0] + "," + json[json.size() - 1] + "]"
+}
+
+project.gradle.ext.getProperties().each { prop ->
+    rootProject.ext.set(prop.key, prop.value)
+}
+writeBuildGradlePredefine(rootProject.mcVers, rootProject.mcIndex)
+
+rootProject.versionStr = "${rootProject.mod_version}-mc${rootProject.minecraft_version}"
+rootProject.compatible_forge_versions = generateForgeVersions(rootProject.compatible_minecraft_versions)
+
+compileJava {
+    sourceCompatibility = rootProject.java_version
+    targetCompatibility = rootProject.java_version
 }
 
 architectury {
@@ -11,21 +54,21 @@ architectury {
 
 subprojects {
     apply plugin: "dev.architectury.loom"
+    apply plugin: "systems.manifold.manifold-gradle-plugin"
 
     loom {
         silentMojangMappingsLicense()
     }
 
     dependencies {
+        annotationProcessor("systems.manifold:manifold-preprocessor:${rootProject.manifold_version}")
+
         minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
         // The following line declares the mojmap mappings, you may use other mappings as well
         mappings loom.officialMojangMappings()
         // The following line declares the yarn mappings you may select this one as well.
         // mappings "net.fabricmc:yarn:1.19.4+build.2:v2"
     }
-
-    build.finalizedBy(mergeJars)
-    assemble.finalizedBy(mergeJars)
 }
 
 allprojects {
@@ -33,8 +76,8 @@ allprojects {
     apply plugin: "architectury-plugin"
     apply plugin: "maven-publish"
 
-    archivesBaseName = rootProject.archives_base_name
-    version = rootProject.mod_version
+    archivesBaseName = "${rootProject.archives_base_name}-${project.name}"
+    version = rootProject.versionStr
     group = rootProject.maven_group
 
     repositories {
@@ -43,11 +86,23 @@ allprojects {
         // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
         // See https://docs.gradle.org/current/userguide/declaring_repositories.html
         // for more information about repositories.
+        maven { url "https://maven.shedaniel.me/" }
+        maven { url "https://maven.terraformersmc.com/releases/" }
     }
 
     tasks.withType(JavaCompile) {
         options.encoding = "UTF-8"
-        options.release = 17
+        options.release = rootProject.java_version as Integer
+        options.compilerArgs += ["-Xplugin:Manifold"]
+    }
+
+    processResources {
+        exclude { file ->
+            if (file.name.contains(".${mod_id}.accesswidener") && file.name != "${accessWidenerVersion}.${mod_id}.accesswidener") {
+                return true
+            }
+            return false
+        }
     }
 
     java {
@@ -57,8 +112,28 @@ allprojects {
 
 forgix {
     group = "%%modgroup%%"
-    mergedJarName = "${project.archivesBaseName}-mc${project.minecraft_version}-${project.mod_version}-${getVersionMetadata()}.jar"
-    outputDir = "build/libs/merged"
+    mergedJarName = "${project.archives_base_name}-${rootProject.versionStr}-${getVersionMetadata()}.jar"
+
+    if (findProject(":fabric"))
+        fabric {
+            jarLocation = "build/libs/${project.archives_base_name}-fabric-${rootProject.versionStr}.jar"
+        }
+
+    if (findProject(":quilt"))
+        quilt {
+            jarLocation = "build/libs/${project.archives_base_name}-quilt-${rootProject.versionStr}.jar"
+        }
+
+    if (findProject(":forge"))
+        forge {
+            jarLocation = "build/libs/${project.archives_base_name}-forge-${rootProject.versionStr}.jar"
+        }
+
+    if (findProject(":neoforge"))
+        custom {
+            projectName = "neoforge"
+            jarLocation = "build/libs/${project.archives_base_name}-neoforge-${rootProject.versionStr}.jar"
+        }
 }
 
 def getVersionMetadata() {
@@ -84,3 +159,13 @@ def getVersionMetadata() {
     // No tracking information could be found about the build
     return "unknown"
 }
+
+// Delete the merged folder when running clean
+task cleanMergedJars() {
+    def mergedFolder = file("Merged")
+    if (mergedFolder.exists()) {
+        delete(mergedFolder)
+    }
+}
+// add cleanMergedJars to the end of the "clean" task
+tasks["clean"].finalizedBy(cleanMergedJars)

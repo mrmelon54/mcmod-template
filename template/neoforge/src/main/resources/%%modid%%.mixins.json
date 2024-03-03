@@ -1,6 +1,6 @@
 {
   "required": true,
-  "package": "%%modgroup%%.mixin.forge",
+  "package": "%%modgroup%%.mixin.neoforge",
   "minVersion": "0.8",
   "client": [
   ],

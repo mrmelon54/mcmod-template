@@ -18,6 +18,9 @@
   "entrypoints": {
     "main": [
       "%%modgroup%%.fabric.%%modclass%%Fabric"
+    ],
+    "modmenu": [
+      "%%modgroup%%.fabriclike.ModMenuIntegration"
     ]
   },
   "mixins": [
@@ -26,7 +29,8 @@
   ],
   "depends": {
     "fabric": "*",
-    "minecraft": "${minecraft_version}",
-    "architectury": ">=${architectury_version}"
+    "minecraft": $compatible_minecraft_versions,
+    "architectury": ">=${architectury_version}",
+    "cloth-config${cloth_config_old}": ">=${cloth_config_version}"
   }
 }

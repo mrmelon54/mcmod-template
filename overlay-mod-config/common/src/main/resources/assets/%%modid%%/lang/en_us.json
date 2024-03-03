@@ -1,5 +1,0 @@
-{
-  "item.%%modid%%.example_item": "Example Item",
-  "text.autoconfig.%%modid%%.title": "%%modname%%",
-  "text.autoconfig.%%modid%%.option.modeEnabled": "Is Enabled?"
-}

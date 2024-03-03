@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "mixin": [
+    "%%modid%%.mixins.json",
+    "%%modid%%-common.mixins.json"
+  ],
+  "quilt_loader": {
+    "group": "${group}",
+    "id": "%%modid%%",
+    "version": "${version}",
+    "metadata": {
+      "name": "%%modname%%",
+      "description": "${description}",
+      "contributors": {
+        "MrMelon54": "Owner"
+      },
+      "contact": {
+        "homepage": "%%modwebsite%%",
+        "sources": "%%modsource%%",
+        "issues": "%%modissue%%"
+      },
+      "license": "GPL-3.0-only",
+      "icon": "icon.png"
+    },
+    "intermediate_mappings": "net.fabricmc:intermediary",
+    "entrypoints": {
+      "init": [
+        "%%modgroup%%.quilt.%%modclass%%Quilt"
+      ],
+      "modmenu": [
+        "%%modgroup%%.fabriclike.ModMenuIntegration"
+      ]
+    },
+    "depends": [
+      {
+        "id": "quilt_loader",
+        "version": "*"
+      },
+      {
+        "id": "quilt_base",
+        "version": "*"
+      },
+      {
+        "id": "minecraft",
+        "version": $compatible_minecraft_versions
+      },
+      {
+        "id": "architectury",
+        "version": ">=${architectury_version}"
+      },
+      {
+        "id": "cloth-config",
+        "version": ">=${cloth_config_version}"
+      }
+    ]
+  },
+  "minecraft": {
+    "environment": "client"
+  }
+}
