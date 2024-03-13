@@ -169,7 +169,7 @@ func main() {
 
 	// rename and replace rest of template
 	err = fs.WalkDir(templateLayers, ".", func(tempPath string, d fs.DirEntry, err error) error {
-		replacedPath, err := modInfo.ReplaceInString(tempPath)
+		replacedPath, err := modInfo.ReplaceInPath(tempPath)
 		if err != nil {
 			return err
 		}

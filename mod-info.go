@@ -10,8 +10,13 @@ import (
 
 type ModInfo map[string]string
 
-func (m ModInfo) ReplaceInString(s string) (string, error) {
-	s2, _, err := transform.String(m.transformer(), s)
+func (m ModInfo) ReplaceInPath(s string) (string, error) {
+	m2 := make(ModInfo)
+	for k, v := range m {
+		m2[k] = v
+	}
+	m2["modgroup"] = strings.ReplaceAll(m2["modgroup"], ".", "/")
+	s2, _, err := transform.String(m2.transformer(), s)
 	return s2, err
 }
 
